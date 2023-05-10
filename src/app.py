@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 import streamlit as st
 from PyPDF2 import PdfReader
@@ -9,13 +10,16 @@ from langchain.llms import OpenAI
 from langchain.callbacks import get_openai_callback
 
 
+
+
 def main():
     load_dotenv()
-    st.set_page_config(page_title="Ask your PDF")
-    st.header("Ask your PDF 💬")
+    OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
+    st.set_page_config(page_title="Frag deine PDF")
+    st.header("Frag deine PDF 💬")
     
     # upload file
-    pdf = st.file_uploader("Upload your PDF", type="pdf")
+    pdf = st.file_uploader("PDF hochladen", type="pdf")
     
     # extract the text
     if pdf is not None:
@@ -34,15 +38,15 @@ def main():
       chunks = text_splitter.split_text(text)
       
       # create embeddings
-      embeddings = OpenAIEmbeddings()
+      embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
       knowledge_base = FAISS.from_texts(chunks, embeddings)
       
       # show user input
-      user_question = st.text_input("Ask a question about your PDF:")
+      user_question = st.text_input("Stell eine Frage an deine PDF:")
       if user_question:
         docs = knowledge_base.similarity_search(user_question)
         
-        llm = OpenAI()
+        llm = OpenAI(openai_api_key=OPENAI_API_KEY)
         chain = load_qa_chain(llm, chain_type="stuff")
         with get_openai_callback() as cb:
           response = chain.run(input_documents=docs, question=user_question)
